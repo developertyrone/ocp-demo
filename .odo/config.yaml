@@ -1,0 +1,15 @@
+kind: LocalConfig
+apiversion: odo.dev/v1alpha1
+ComponentSettings:
+  Type: nodejs:12
+  SourceLocation: https://github.com/openshift/nodejs-ex
+  Ref: HEAD
+  SourceType: git
+  Ports:
+  - 8080/TCP
+  Application: nodejs
+  Project: project3
+  Name: nodeapp
+  Url:
+  - Name: testnodejs
+    Port: 8080
