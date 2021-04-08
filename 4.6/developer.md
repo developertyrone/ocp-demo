@@ -25,8 +25,6 @@ oc get route -n "$BACKEND_NAMESPACE" cakephp-ex -o jsonpath='{.spec.host}'
 export SIMPLE_APP_HOSTNAME=http://"$(oc get route -n "$BACKEND_NAMESPACE" cakephp-ex -o jsonpath='{.spec.host}')"
 
 curl -sfk $SIMPLE_APP_HOSTNAME
-
-
 ```
 
 https://docs.openshift.com/container-platform/4.6/builds/build-strategies.html
@@ -37,13 +35,14 @@ https://docs.openshift.com/container-platform/4.5/openshift_images/using_images/
 ```
 oc project "$BACKEND_NAMESPACE"
 
-##Install ODO
+## Install ODO
 sudo curl -L https://mirror.openshift.com/pub/openshift-v4/clients/odo/latest/odo-linux-amd64 -o /usr/local/bin/odo
 sudo chmod +x /usr/local/bin/odo
 
-##Using ODO
+## Using ODO
 odo catalog list components //To check which framework supported
 git clone https://github.com/openshift/nodejs-ex
+cd nodejs-ex
 odo create nodejs --app=nodejs_app / odo create openshift/nodejs:8
 odo push
 odo url create --port 8080
@@ -54,9 +53,7 @@ curl <url>
 odo push
 
 ## Play with loadtest for cakephp
-## Checking Monitoring
-## Checking Logging
-
+## Checking Monitoring of cakephp
 
 git clone https://github.com/developertyrone/spring-petclinic-rest
 cd spring-petclinic-rest
@@ -67,6 +64,9 @@ odo url create api --port 9966
 odo push
 oc get route
 
+## Checking Logging
+
+---------------------------EXTRA-----------------------------------------
 ## odo create java-springboot spring-petclinic-rest --app=api_backend //For configuration udpate
 ## odo config set Ports 9966/TCP, odo push //For configuration update
 
@@ -78,42 +78,39 @@ odo storage list
 odo storage delete <storage_name>
 odo storage list
 odo push
-```
-
-# Jenkins deployment
-```
-oc new-app -n "$BACKEND_NAMESPACE" --template=jenkins-ephemeral --name=jenkins -p MEMORY_LIMIT=2Gi
-
-oc set env -n "$BACKEND_NAMESPACE" dc/jenkins JENKINS_OPTS=--sessionTimeout=86400
-
-//oc set env -n "$BACKEND_NAMESPACE" dc/jenkins INSTALL_PLUGINS=http_request:1.8.24
- 
+---------------------------EXTRA-----------------------------------------
 ```
 
 # 3scale deployment
 ```
+rpm -ivh https://github.com/3scale-labs/3scale_toolbox_packaging/releases/download/v0.18.0/3scale-toolbox-0.18.0-1.el7.x86_64.rpm
+
 // access the 3scale portal and retrieve the service management api token
 
-3scale remote -k add 3scale-demo "https://874793196e1ea27bea47eef08c66b98b2b83ba1c82c2d4369cdcf976af1aa35d@3scale-admin.apps.dev.ocp.local/"
+3scale remote -k add 3scale-demo "https://<token>@3scale-admin.apps.cluster-453c.453c.sandbox995.opentlc.com/"
 
 oc create secret generic 3scale-toolbox -n "$BACKEND_NAMESPACE" --from-file="$HOME/.3scalerc.yaml"
 
-export BACKEND_HOSTNAME="$(oc get route -n "$BACKEND_NAMESPACE" api-spring-petclinic-rest -o jsonpath='{.spec.host}')"
+export BACKEND_HOSTNAME="$(oc get route -n "$BACKEND_NAMESPACE" api-petclinic -o jsonpath='{.spec.host}')"
 
 git clone https://github.com/developertyrone/3scale-toolbox-jenkins-samples
 
 cd 3scale-toolbox-jenkins-samples
 
+// browse https://3scale-admin.apps.cluster-453c.453c.sandbox995.opentlc.com/buyers/accounts/3 
+
+export ONPREM_DEVELOPER_ACCOUNT_ID=3
+
 oc process -f 3scale-toolbox-jenkins-samples/onprem-custom-backend/setup.yaml \
            -p DEVELOPER_ACCOUNT_ID="$ONPREM_DEVELOPER_ACCOUNT_ID" \
            -p PRIVATE_BASE_URL="http://$BACKEND_HOSTNAME" \
-           -p PRIVATE_BASE_OPENAPI="/petclinic/v2/api-docs" \
-           -p PRIVATE_BASE_INTEGRATION_TEST="/petclinic/api/pets" \
+           -p PRIVATE_BASE_OPENAPI="/v2/api-docs" \
+           -p PRIVATE_BASE_INTEGRATION_TEST="/api/pets" \
            -p TARGET_INSTANCE=3scale-demo \
            -p DISABLE_TLS_VALIDATION=yes \
            -p NAMESPACE="$BACKEND_NAMESPACE" |oc apply -f -
 
-oc start-build onprem-custom-backend-3scale-demo
+oc -n "$BACKEND_NAMESPACE" start-build onprem-custom-backend-3scale-demo
 
 ```
 
@@ -121,7 +118,7 @@ oc start-build onprem-custom-backend-3scale-demo
 
 - https://api.cluster-7eb9.7eb9.sandbox31.opentlc.com:6443
 - admin
-- TLgONyeVpUUA8oN5
+- asfasfasf
 
 - app-from-vscode
 - https://github.com/openshift/nodejs-ex

@@ -2,6 +2,7 @@
 # Overview of the demo
 # Build cluster
 # Test basic operation
+```
 oc get nodes
 
 oc top nodes
@@ -42,7 +43,7 @@ oc adm policy add-role-to-user edit user2 -n project1
 [project isolation]
 
 [project isolation test]
-
+```
 # Build with Logging Stack
 ```
 oc apply -f - << EOF
@@ -154,8 +155,82 @@ EOF
 ```
 
 # Install 3scale
+```
+oc new-project 3scale-apimanager
+
+oc create secret docker-registry threescale-registry-auth \
+  --docker-server=registry.redhat.io \
+  --docker-username="<refer to cred.md>" \
+  --docker-password="<refer to cred.md>"
+
+Install 3Scale Operator thru Openshift Console
+
+oc -n kube-system get cm cluster-config-v1 -o jsonpath='{.data.install-config}'  | grep baseDomain
+
+oc delete limitranges 3scale-apimanager-core-resource-limits
+
+cat <<EOF | oc apply -f -
+apiVersion: apps.3scale.net/v1alpha1
+kind: APIManager
+metadata:
+  namespace: 3scale-apimanager
+  name: 3scale
+spec:
+  resourceRequirementsEnabled: true
+  monitoring:
+    enabled: true
+  wildcardDomain: apps.cluster-453c.453c.sandbox995.opentlc.com
+EOF
+---
+oc -n 3scale-apimanager delete pvc system-storage
+---
+cat <<EOF | oc apply -f -
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: system-storage
+  namespace: 3scale-apimanager  
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+  storageClassName: gp2
+  volumeMode: Filesystem
+EOF
+---
+```
+# Install SSO
+```
+oc new-project sso
+
+Install SSO Operator
+
+cat <<EOF | oc apply -f -
+apiVersion: keycloak.org/v1alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  labels:
+    app: sso
+  namespace: sso
+spec:
+  externalAccess:
+    enabled: true
+  instances: 1
+EOF
+```
+
+# Install Project Based Jenkins
+```
+oc new-app -n "$BACKEND_NAMESPACE" --template=jenkins-ephemeral --name=jenkins -p MEMORY_LIMIT=2Gi
+
+oc set env -n "$BACKEND_NAMESPACE" dc/jenkins JENKINS_OPTS=--sessionTimeout=86400
+```
 
 
+# Others
 [Monitoring]
 Deploy Monitoring Stacks
 ---
